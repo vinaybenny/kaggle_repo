@@ -65,15 +65,3 @@ submit_predictions <- function(predictions,
               ,col.names = c("test_id","is_female")
               ,sep = ",")
 }
-
-
-
-  
-  
-  
-  
-  
-  
-  
-  
->>>>>>> origin
