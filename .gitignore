@@ -8,3 +8,6 @@ scripts/config.R
 # make sure that datasets dont end up on github
 data/*.csv
 data/*.xlsx
+
+# any history that is lurking
+.Rhistory
