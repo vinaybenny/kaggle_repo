@@ -1,6 +1,10 @@
 # contains parameters that are specific to each individual contributor such as the path to the folder
-config.R
+scripts/config.R
 
 # dont include any of the actual output
 *.png
 *.pdf
+
+# make sure that datasets dont end up on github
+data/*.csv
+data/*.xlsx

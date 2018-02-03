@@ -7,7 +7,7 @@
 # Output: 
 # TBA
 #
-# Author: V Benny
+# Author: E Walsh, V Benny
 #
 # Dependencies: 
 # TBA
@@ -17,9 +17,22 @@
 # Issues:
 #
 # History (reverse order): 
-# 01 Feb 2018 VB v1
+# 01 Feb 2018 EW v1
 # ================================================================================================
 
 print("Creating helper functions...")
 
 # ===================================== functions ================================================
+
+submit_predictions <- function(predictions, 
+                               filename= paste("../data/submission",
+                                               format(Sys.time(), "%Y%m%d"),
+                                               ".csv", 
+                                               sep = "")){
+  
+  write.table(predictions
+              ,file = filename 
+              ,row.names = FALSE
+              ,col.names = c("test_id","is_female")
+              ,sep = ",")
+}
