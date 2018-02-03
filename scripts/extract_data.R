@@ -1,27 +1,26 @@
 # ================================================================================================ #
-# Description: Extract the train and test datasets and apply basic transformation
+# Description: Extract the train and test datasets and apply basic transformations
 # 
 # Author: V Benny
 #
 # ================================================================================================ #
 
-library(data.table)
-library(xlsx)
-
 
 ############################### Data Extraction ################################################
 
 # Read files into memory
-train <- fread('../data/train.csv', stringsAsFactors = FALSE) %>% as.data.frame()
-test <- fread('../data/test.csv', stringsAsFactors = FALSE)  %>% as.data.frame()
-dict <- read.xlsx("../data/data_dictionary.xlsx", sheetName = "Codebook")
+train <- fread('data/train.csv', stringsAsFactors = FALSE) %>% as.data.frame()
+test <- fread('data/test.csv', stringsAsFactors = FALSE)  %>% as.data.frame()
+dict <- read.xlsx("data/data_dictionary.xlsx", sheetName = "Codebook")
 
 ############################### Data Pre-cleaning ################################################
 
 # Check missingness in training dataset
 missing_values <- train %>% 
   summarize_all(funs(sum(is.na(.))/n())) %>% 
-  gather(key="feature", value="missing_pct") %>% 
+  gather(key="feature", value="missing_pct") %>%
+  left_join(dict, by = c("feature" = "Column.Name")) %>%
+  select(-Values) %>%
   arrange(missing_pct)
 
 # Drop all columns which are completely empty
@@ -33,6 +32,9 @@ train <- train %>%
   select(-one_of(dropcols$feature))
 test <- test %>% 
   select(-one_of(dropcols$feature))
+
+# Assign labels to dataset wherever available for ease of interpreting columns. Use label(train) to get descriptions
+train <- assignLabels(train, dict)
 
 
 # Classify column variables

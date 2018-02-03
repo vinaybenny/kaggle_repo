@@ -34,10 +34,13 @@ library(caret)    # 6.0-78   classification and regression training
 library(ggplot2)  # 2.2.1    nice plots
 library(xgboost)  # 0.6.4.1  gradient boosting
 library(h2o)      # 3.16.0.2 deep learning    
-# library(e1071)    # 1.6-8    support vector machines
+# library(e1071)  # 1.6-8    support vector machines
+library(Hmisc)    # 4.1-1    labelling columns of dataset
+library(data.table) # 1.10.4-3 faster data extraction functions
+library(xlsx)     # 0.5.7   reading excel data
 
 # this config must define folder_path the absolute path of the repo
-source("config.R")
+source("scripts/config.R")
 
 setwd(folder_path)
 
