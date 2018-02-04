@@ -35,7 +35,7 @@ train.matrix = xgb.DMatrix(data = as.matrix(train.xinputs), label = as.integer(t
 valid.matrix = xgb.DMatrix(data = as.matrix(valid.xinputs), label = as.integer(valid$is_female))
 
 # ensure both the training and validation data is evaluated at each iteration
-watch_sets = list(train = data.train.matrix, valid = dataset.valid.matrix)
+watch_sets = list(train = train.matrix, valid = valid.matrix)
 
 
 # an initial stab at parameters for the grid search as suggested by Zhang (2018) and  Abhishek (2018)
