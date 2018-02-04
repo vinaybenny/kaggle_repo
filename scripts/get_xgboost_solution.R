@@ -105,14 +105,14 @@ hyper_parameters <- apply(tuning_grid, 1, function(grid_values){
 
 
 # find the optimal parameters for the model
-opt_max_depth <- hyper_parameters[1 , which(hyper_parameters[6, ] == max(hyper_parameters[9, ]))];
-opt_eta <- hyper_parameters[2 , which(hyper_parameters[6, ] == max(hyper_parameters[9, ]))];
-opt_subsample <- hyper_parameters[3 , which(hyper_parameters[6, ] == max(hyper_parameters[9, ]))];
-opt_colsample <- hyper_parameters[4 , which(hyper_parameters[6, ] == max(hyper_parameters[9, ]))];
-opt_num_rounds <- hyper_parameters[5 , which(hyper_parameters[6, ] == max(hyper_parameters[9, ]))];
-opt_gamma <- hyper_parameters[6 , which(hyper_parameters[6, ] == max(hyper_parameters[9, ]))];
-opt_min_child_weight <- hyper_parameters[7 , which(hyper_parameters[6, ] == max(hyper_parameters[9, ]))];
-opt_alpha <- hyper_parameters[8 , which(hyper_parameters[6, ] == max(hyper_parameters[9, ]))];
+opt_max_depth <- hyper_parameters[1 , which(hyper_parameters[9, ] == max(hyper_parameters[9, ]))];
+opt_eta <- hyper_parameters[2 , which(hyper_parameters[9, ] == max(hyper_parameters[9, ]))];
+opt_subsample <- hyper_parameters[3 , which(hyper_parameters[9, ] == max(hyper_parameters[9, ]))];
+opt_colsample <- hyper_parameters[4 , which(hyper_parameters[9, ] == max(hyper_parameters[9, ]))];
+opt_num_rounds <- hyper_parameters[5 , which(hyper_parameters[9, ] == max(hyper_parameters[9, ]))];
+opt_gamma <- hyper_parameters[6 , which(hyper_parameters[9, ] == max(hyper_parameters[9, ]))];
+opt_min_child_weight <- hyper_parameters[7 , which(hyper_parameters[9, ] == max(hyper_parameters[9, ]))];
+opt_alpha <- hyper_parameters[8 , which(hyper_parameters[9, ] == max(hyper_parameters[9, ]))];
 
 
 # run the final model based on the results from the tuning
