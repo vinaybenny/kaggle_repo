@@ -38,6 +38,7 @@ library(h2o)      # 3.16.0.2 deep learning
 library(Hmisc)    # 4.1-1    labelling columns of dataset
 library(data.table) # 1.10.4-3 faster data extraction functions
 library(xlsx)     # 0.5.7   reading excel data
+library(mlr)      # 2.11
 
 # this config must define folder_path the absolute path of the repo
 source("scripts/config.R")

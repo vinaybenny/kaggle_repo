@@ -8,12 +8,12 @@
 
 library(VIM)
 library(mice)
-library(xlsx)
 library(stringr)
 library(vtreat)
 library(FactoMineR)
 library(reshape2)
 library(unbalanced)
+library(fastcluster)
 
 
 # Plot the list of empty columns
@@ -21,7 +21,18 @@ ggplot(missing_values  , aes(x = reorder(feature,-missing_pct), y = missing_pct 
   geom_bar(stat="identity", fill ="red") +
   coord_flip()
 
-# Obtain all combination of missingness patterns and their percentages
+
+# The big question is how to treat NULLs, and this can be extremely context sensitive for each variable.
+# It would be a good idea to do a hierarchical variable clustering for missingness in data.
+# For this, let's create a dataset that is just indicative of whether each cell is NULL or not.
+dummy_train <- lapply(train, function(x) ifelse(is.na(x), 1, 0) ) %>% data.frame()
+missingness_cluster <- fastcluster::hclust(d = dist(dummy_train), method = "ward.D2")
+plot(missingness_cluster)
+
+
+
+
+# Obtain all combination of missingness patterns and their percentages- too many possible combos in this case.
 # missing_pattern <- aggr(train[, !names(train) %in% missing_values[which(missing_values$missing_pct == 0), 1]]
 #                         ,col = mdc(1:2)
 #                         ,numbers = TRUE
@@ -37,9 +48,10 @@ ggplot(missing_values  , aes(x = reorder(feature,-missing_pct), y = missing_pct 
 
 ############################### Data Cleaning & Imputation ################################################
 
+
 # Use vtreat package to perform data cleaning/imputation
 cfeencoder <- vtreat::mkCrossFrameCExperiment(dframe = train, varlist = c(catcols, numcols, intcols)
-                                              ,outcomename = targetcol, outcometarget = "1")
+                                              , outcomename = targetcol, outcometarget = "1")
 treatplan <- cfeencoder$treatments
 train <- cfeencoder$crossFrame
 
