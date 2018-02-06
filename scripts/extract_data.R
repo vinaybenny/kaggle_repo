@@ -45,7 +45,7 @@ intcols <- names(train[, sapply(train, is.integer) & !( names(train) %in% c(idco
 numcols <- names(train[, !names(train) %in% c(catcols, intcols, idcol, targetcol) ])
 
 # A crude treatment of all NAs in the dataset as a special category. This has repercussions on numeric columns
-train[is.na(train)] <- -99
+#train[is.na(train)] <- -99
 
 # Cast all categorical columns as factors
 train[catcols] <- lapply(train[catcols], as.factor)

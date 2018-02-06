@@ -65,3 +65,21 @@ submit_predictions <- function(predictions,
               ,col.names = c("test_id","is_female")
               ,sep = ",")
 }
+
+
+#' Function to create the WOE coding for datasets
+#' @param v character scalar: variable name
+#' @param vcol chracter, independent or input variable values
+#' @param y logical, dependent or outcome variable to predict
+#' @param weights row/example weights
+#' @return scored training data column
+woeCoderC <- function(v, vcol, 
+                     y, 
+                     weights) {
+  # classification case y ~ vcol
+  d <- data.frame(x = vcol,
+                  y = y,
+                  stringsAsFactors = FALSE)
+  return(WOE(X = temp$gender, Y= temp$outcome))
+}
+

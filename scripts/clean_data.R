@@ -26,8 +26,8 @@ ggplot(missing_values  , aes(x = reorder(feature,-missing_pct), y = missing_pct 
 # It would be a good idea to do a hierarchical variable clustering for missingness in data.
 # For this, let's create a dataset that is just indicative of whether each cell is NULL or not.
 dummy_train <- lapply(train, function(x) ifelse(is.na(x), 1, 0) ) %>% data.frame()
-missingness_cluster <- fastcluster::hclust(d = dist(dummy_train), method = "ward.D2")
-plot(missingness_cluster)
+# missingness_cluster <- fastcluster::hclust(d = dist(dummy_train), method = "ward.D2")
+# plot(missingness_cluster)
 
 
 
@@ -48,12 +48,23 @@ plot(missingness_cluster)
 
 ############################### Data Cleaning & Imputation ################################################
 
+# We apply WOE to encode the categorical variables into numeric values
+# I've found a bug in the WOE function for categorical levels with very small number of occurences, but 
+# we'll go with it now until I fix it up.
+# train[catcols] <- lapply(train[catcols], function(x) WOE(X = x, Y = train$is_female)) %>% as.data.frame()
 
-# Use vtreat package to perform data cleaning/imputation
-cfeencoder <- vtreat::mkCrossFrameCExperiment(dframe = train, varlist = c(catcols, numcols, intcols)
-                                              , outcomename = targetcol, outcometarget = "1")
-treatplan <- cfeencoder$treatments
-train <- cfeencoder$crossFrame
+
+
+# Use vtreat package to create a treatment plan for impact coding
+treatencoder <- vtreat::mkCrossFrameCExperiment(dframe = train, varlist = c(catcols, numcols, intcols)
+                                              ,outcomename = targetcol, outcometarget = "1", minFraction = 0.5
+                                              ,ncross=5
+                                              # ,customCoders =list('c.woeC.center' = woeCoderC)
+                                              ,codeRestriction = c('clean', 'isBAD', 'catB')
+                                              )
+treatplan <- treatencoder$treatments
+train <- vtreat::prepare(treatplan, train)
+valid <- vtreat::prepare(treatplan, valid)
 
 ####################################### Apply variable transformations #################################################
 
