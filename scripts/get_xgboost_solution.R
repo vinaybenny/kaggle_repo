@@ -31,8 +31,8 @@ print("Building xgboost solution...")
 
 
 
-train.matrix = xgb.DMatrix(data = as.matrix(train.xinputs), label = as.integer(train$is_female))
-valid.matrix = xgb.DMatrix(data = as.matrix(valid.xinputs), label = as.integer(valid$is_female))
+train.matrix = xgb.DMatrix(data = as.matrix(train %>% select(-is_female)), label = as.numeric(as.character(train$is_female)))
+valid.matrix = xgb.DMatrix(data = as.matrix(valid %>% select(-is_female)), label = as.numeric(as.character(valid$is_female)))
 
 # ensure both the training and validation data is evaluated at each iteration
 watch_sets = list(train = train.matrix, valid = valid.matrix)

@@ -23,26 +23,32 @@ missing_values <- train %>%
   select(-Values) %>%
   arrange(missing_pct)
 
-# Drop all columns which are completely empty
-dropcols <- missing_values %>% 
-  filter(missing_pct == 1.0) %>% 
-  select(feature) %>% 
-  as.vector()
-train <- train %>% 
-  select(-one_of(dropcols$feature))
-test <- test %>% 
-  select(-one_of(dropcols$feature))
+# Drop all columns which are completely empty or have no variance at all.
+train <- removeConstantFeatures(train)
 
 # Assign labels to dataset wherever available for ease of interpreting columns. Use label(train) to get descriptions
 train <- assignLabels(train, dict)
 
 
-# Classify column variables
-idcol <- "trainid"
+# Classify column variables based on types
+# Assuming all columns in the codebook are categorical, since these have levels defined. Of course, we lose 
+# ordinality when we do this. these can be revisited later on a case-by-case basis. 
+# We add all columns of char type to this, and some other columns that look like those are factors.
+idcol <- "train_id"
 targetcol <- "is_female"
-catcols <- names(train[, sapply(train, is.character)])
+catcols <- union(union(names(train[, !grepl("Unknown", label(train), fixed = TRUE) & !names(train) %in% c(targetcol)]), 
+                 names(train[, sapply(train, is.character)])),
+                 c("AA4", "AA7", "AA14", "AA15", "DG8a", "DG8b", "DG8c", "DL4_96", "DL4_99", "DL11", "MT1", "IFI18", "FB13",
+                   "DG9a", "DG9b", "DG9c", "G2P2_96", "G2P3_6", "G2P3_8", "G2P3_9","G2P3_11", "G2P3_13", "G2P3_96", "MT6C",
+                   "MM23", "FB14", "FB15"))
 intcols <- names(train[, sapply(train, is.integer) & !( names(train) %in% c(idcol, catcols, targetcol))])
 numcols <- names(train[, !names(train) %in% c(catcols, intcols, idcol, targetcol) ])
+
+# A crude treatment of all NAs in the dataset as a special category. This has repercussions on numeric columns
+#train[is.na(train)] <- -99
+
+# Cast all categorical columns as factors
+train[catcols] <- lapply(train[catcols], as.factor)
 
 # Train-Validation split
 validation_size <- 0.7
