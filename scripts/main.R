@@ -40,8 +40,9 @@ library(data.table) # 1.10.4-3 faster data extraction functions
 library(xlsx)     # 0.5.7   reading excel data
 library(mlr)      # 2.11
 
+
 # this config must define folder_path the absolute path of the repo
-source("scripts/config.R")
+#source("scripts/config.R")
 
 setwd(folder_path)
 
@@ -49,7 +50,9 @@ source("scripts/get_helper_functions.R")
 
 # ====================================== analysis ============================================
 
-source("scripts/get_data.R")
+source("scripts/extract_data.R")
+
+source("scripts/clean_data.R")
 
 source("scripts/get_features.R")
 

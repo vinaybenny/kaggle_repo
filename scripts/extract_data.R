@@ -15,6 +15,10 @@ dict <- read.xlsx("data/data_dictionary.xlsx", sheetName = "Codebook")
 
 ############################### Data Pre-cleaning ################################################
 
+# Rename id columns in train and test
+train <- rename(train, id = train_id)
+test <- rename(test, id = test_id)
+
 # Check missingness in training dataset
 missing_values <- train %>% 
   summarize_all(funs(sum(is.na(.))/n())) %>% 
@@ -23,8 +27,9 @@ missing_values <- train %>%
   select(-Values) %>%
   arrange(missing_pct)
 
-# Drop all columns which are completely empty or have no variance at all.
+# Drop all columns which are completely empty or have no variance at all in train, and retain only these in test.
 train <- removeConstantFeatures(train)
+test <- test %>% select(one_of(names(train)))
 
 # Assign labels to dataset wherever available for ease of interpreting columns. Use label(train) to get descriptions
 train <- assignLabels(train, dict)
@@ -34,7 +39,7 @@ train <- assignLabels(train, dict)
 # Assuming all columns in the codebook are categorical, since these have levels defined. Of course, we lose 
 # ordinality when we do this. these can be revisited later on a case-by-case basis. 
 # We add all columns of char type to this, and some other columns that look like those are factors.
-idcol <- "train_id"
+idcol <- "id"
 targetcol <- "is_female"
 catcols <- union(union(names(train[, !grepl("Unknown", label(train), fixed = TRUE) & !names(train) %in% c(targetcol)]), 
                  names(train[, sapply(train, is.character)])),
@@ -47,8 +52,9 @@ numcols <- names(train[, !names(train) %in% c(catcols, intcols, idcol, targetcol
 # A crude treatment of all NAs in the dataset as a special category. This has repercussions on numeric columns
 #train[is.na(train)] <- -99
 
-# Cast all categorical columns as factors
+# Cast all categorical columns as factors in train & test
 train[catcols] <- lapply(train[catcols], as.factor)
+test[catcols] <- lapply(test[catcols], as.factor)
 
 # Train-Validation split
 validation_size <- 0.7

@@ -31,8 +31,10 @@ print("Building xgboost solution...")
 
 
 
-train.matrix = xgb.DMatrix(data = as.matrix(train %>% select(-is_female)), label = as.numeric(as.character(train$is_female)))
-valid.matrix = xgb.DMatrix(data = as.matrix(valid %>% select(-is_female)), label = as.numeric(as.character(valid$is_female)))
+train.matrix = xgb.DMatrix(data = as.matrix(train %>% select(-is_female, -id)), label = as.numeric(as.character(train$is_female)))
+valid.matrix = xgb.DMatrix(data = as.matrix(valid %>% select(-is_female, -id)), label = as.numeric(as.character(valid$is_female)))
+test.matrix = xgb.DMatrix(data = as.matrix(test %>% select(-id) ))
+
 
 # ensure both the training and validation data is evaluated at each iteration
 watch_sets = list(train = train.matrix, valid = valid.matrix)
@@ -46,11 +48,11 @@ watch_sets = list(train = train.matrix, valid = valid.matrix)
 tuning_grid <- expand.grid(
   max_depth         = c(6, 8, 10),            # depth of the tree - note we do have a large number of variables to choose from
   eta               = c(0.01, 0.05),          # learning rate
-  subsample         = c(.5, .75, 1.0),        # proportion of obs supplied to the tree
-  colsample_bytree  = c(0.4, 0.6, 0.8),       # proportion of features supplied to the tree
-  gamma             = c(0.05, 0.1, 0.5, 1.0), # regularisation gamma - probably need to look at train vs valid error to decide value
+  subsample         = c(.75, 1.0),        # proportion of obs supplied to the tree
+  colsample_bytree  = c(0.6, 0.8),       # proportion of features supplied to the tree
+  gamma             = c(0.05), # regularisation gamma - probably need to look at train vs valid error to decide value
   min_child_weight  = c(1.36, 2),             # minimum weight to stop the node from splitting first val is 1/sqrt(event)
-  alpha             = c(0, 0.1, 0.5, 1.0)     # L1 regularisation - extra feature selection Lasso style
+  alpha             = c(0)     # L1 regularisation - extra feature selection Lasso style
 )
 
 # perform a grid search on the parameters 
@@ -63,6 +65,10 @@ hyper_parameters <- apply(tuning_grid, 1, function(grid_values){
   gamma_col            = grid_values[["gamma"]];
   min_child_weight_col = grid_values[["min_child_weight"]];
   alpha_col            = grid_values[["alpha"]];
+  
+  print(paste0("Depth: ", max_depth_col, " Eta: ", eta_col, " Subsample: ", subsample_col, 
+               " Colsample: ", colsample_bytree_col, " Gamma: ", gamma_col, 
+               " Minchild weight: ", min_child_weight_col, " Alpha: ", alpha_col))
   
   opt_cv <- xgb.cv(data = train.matrix, 
                    nrounds          = 500, 
@@ -135,14 +141,16 @@ final_xgb_model <- xgb.train(
   objective   = "binary:logistic", 
   eval_metric = "auc",
   maximize    = FALSE,
-  watchlist   = watch_sets
+  watchlist   = watch_sets,
+  nrounds     = opt_num_rounds
 );
 
 # check out the feature importance
 final_model_dump <- xgb.dump(final_xgb_model, with_stats = TRUE);
-importance_mat <- xgb.importance (feature_names = colnames(train.xinputs), model = final_model_dump)
+importance_mat <- xgb.importance (feature_names = colnames(train), model = final_xgb_model)
 xgb.plot.importance(importance_mat, cex=0.7);
 
 
 # generate predictions
-predict(final_xgb_model, data = test)
+predictions<- data.frame(test_id = test$id, predictions = predict(final_xgb_model, newdata = test.matrix))
+submit_predictions(predictions)

@@ -56,15 +56,19 @@ dummy_train <- lapply(train, function(x) ifelse(is.na(x), 1, 0) ) %>% data.frame
 
 
 # Use vtreat package to create a treatment plan for impact coding
-treatencoder <- vtreat::mkCrossFrameCExperiment(dframe = train, varlist = c(catcols, numcols, intcols)
-                                              ,outcomename = targetcol, outcometarget = "1", minFraction = 0.5
+treatencoder <- vtreat::mkCrossFrameCExperiment(dframe = train %>% select(-id), varlist = c(catcols, numcols, intcols)
+                                              ,outcomename = targetcol, outcometarget = "1", minFraction = 0.4
                                               ,ncross=5
                                               # ,customCoders =list('c.woeC.center' = woeCoderC)
                                               ,codeRestriction = c('clean', 'isBAD', 'catB')
                                               )
 treatplan <- treatencoder$treatments
-train <- vtreat::prepare(treatplan, train)
-valid <- vtreat::prepare(treatplan, valid)
+print(treatplan$scoreFrame[,c('varName','sig')])
+
+# Apply the treatments to train, valid and test
+train <- cbind(id = train$id, vtreat::prepare(treatplan, train %>% select(-id)) )
+valid <- cbind(id = valid$id, vtreat::prepare(treatplan, valid %>% select(-id)) )
+test <- cbind(id = test$id, vtreat::prepare(treatplan, test %>% select(-id)) )
 
 ####################################### Apply variable transformations #################################################
 
