@@ -153,4 +153,7 @@ xgb.plot.importance(importance_mat, cex=0.7);
 
 # generate predictions
 predictions<- data.frame(test_id = test$id, predictions = predict(final_xgb_model, newdata = test.matrix))
-submit_predictions(predictions)
+submit_predictions(predictions, paste("./output/submission",
+                                      format(Sys.time(), "%Y%m%d"),
+                                      ".csv", 
+                                      sep = ""))
