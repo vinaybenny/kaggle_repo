@@ -83,3 +83,4 @@ woeCoderC <- function(v, vcol,
   return(WOE(X = temp$gender, Y= temp$outcome))
 }
 
+print("Finished loading: assignLabels, submit_predictions, woeCoderC")
