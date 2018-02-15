@@ -14,6 +14,10 @@ library(FactoMineR)
 library(reshape2)
 library(unbalanced)
 library(fastcluster)
+library(parallel)
+
+# Set up parallelisation  parameters
+cl <- makeCluster(4) # Use judiciously
 
 
 # Plot the list of empty columns
@@ -55,20 +59,41 @@ dummy_train <- lapply(train, function(x) ifelse(is.na(x), 1, 0) ) %>% data.frame
 
 
 
-# Use vtreat package to create a treatment plan for impact coding
+# Use vtreat package to create a treatment plan for impact coding of dataset
 treatencoder <- vtreat::mkCrossFrameCExperiment(dframe = train %>% select(-id), varlist = c(catcols, numcols, intcols)
-                                              ,outcomename = targetcol, outcometarget = "1", minFraction = 0.4
+                                              ,outcomename = targetcol, outcometarget = "1", minFraction = 0.1
                                               ,ncross=5
                                               # ,customCoders =list('c.woeC.center' = woeCoderC)
                                               ,codeRestriction = c('clean', 'isBAD', 'catB')
+                                              ,parallelCluster = cl
                                               )
 treatplan <- treatencoder$treatments
-print(treatplan$scoreFrame[,c('varName','sig')])
+#print(treatplan$scoreFrame[,c('varName','sig')])
 
 # Apply the treatments to train, valid and test
 train <- cbind(id = train$id, vtreat::prepare(treatplan, train %>% select(-id)) )
 valid <- cbind(id = valid$id, vtreat::prepare(treatplan, valid %>% select(-id)) )
 test <- cbind(id = test$id, vtreat::prepare(treatplan, test %>% select(-id)) )
+
+
+
+
+# Apply principal components analysis to extract features from the dataset
+#pcadata <- PCA(train %>% select(-id, -is_female), scale.unit=TRUE, ncp=5, graph=T)
+pca <- prcomp(train %>% select(-id, -is_female), retx=TRUE, center=TRUE, scale=TRUE)
+expl.var <- pca$sdev^2/sum(pca$sdev^2)
+plot(expl.var[1:300], xlab = "Principal Component",
+     ylab = "Proportion of Variance Explained",
+     type = "b")
+
+
+# Apply PCA to all datasets
+train.pca <- cbind(id = train$id, predict(pca, newdata=train %>% select(-id, -is_female))[,1:400], 
+               is_female = as.numeric(as.character(train$is_female)) ) %>% as.data.frame()
+valid.pca <- cbind(id = valid$id, predict(pca, newdata=valid %>% select(-id, -is_female))[,1:400], 
+               is_female = as.numeric(as.character(valid$is_female)) ) %>% as.data.frame()
+test.pca <- cbind(id = test$id, predict(pca, newdata=test %>% select(-id))[,1:400] ) %>% as.data.frame()
+
 
 ####################################### Apply variable transformations #################################################
 
@@ -108,9 +133,7 @@ test <- cbind(id = test$id, vtreat::prepare(treatplan, test %>% select(-id)) )
 # # Create list of columns that need to be excluded from any modelling, based on correlation being above a threshold value
 # exclude_columns <- (melted_cormat %>% filter(Var1 != Var2, value > 0.9))[,1] %>% as.character()
 
-
-
-
+stopCluster(cl)
 
 
 

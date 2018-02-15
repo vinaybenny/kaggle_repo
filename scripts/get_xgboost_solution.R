@@ -47,11 +47,11 @@ watch_sets = list(train = train.matrix, valid = valid.matrix)
 # https://www.analyticsvidhya.com/blog/2016/03/complete-guide-parameter-tuning-xgboost-with-codes-python/
 tuning_grid <- expand.grid(
   max_depth         = c(6, 8, 10),            # depth of the tree - note we do have a large number of variables to choose from
-  eta               = c(0.01, 0.05),          # learning rate
+  eta               = c(0.1),          # learning rate
   subsample         = c(.75, 1.0),        # proportion of obs supplied to the tree
   colsample_bytree  = c(0.6, 0.8),       # proportion of features supplied to the tree
   gamma             = c(0.05), # regularisation gamma - probably need to look at train vs valid error to decide value
-  min_child_weight  = c(1.36, 2),             # minimum weight to stop the node from splitting first val is 1/sqrt(event)
+  min_child_weight  = c(1.36),             # minimum weight to stop the node from splitting first val is 1/sqrt(event)
   alpha             = c(0)     # L1 regularisation - extra feature selection Lasso style
 )
 
@@ -86,7 +86,7 @@ hyper_parameters <- apply(tuning_grid, 1, function(grid_values){
                    gamma            = gamma_col,
                    min_child_weight = min_child_weight_col,
                    alpha            = alpha_col,
-                   early.stop.round = 50,
+                   early_stopping_rounds = 50,
                    maximize         = FALSE
                    
   );
@@ -147,13 +147,60 @@ final_xgb_model <- xgb.train(
 
 # check out the feature importance
 final_model_dump <- xgb.dump(final_xgb_model, with_stats = TRUE);
-importance_mat <- xgb.importance (feature_names = colnames(train), model = final_xgb_model)
-xgb.plot.importance(importance_mat, cex=0.7);
+importance_mat <- xgb.importance (feature_names = colnames(train %>% select(-is_female, -id)), model = final_xgb_model)
+xgb.plot.importance(importance_mat, cex=0.3);
+importance_mat_dtl <- xgb.importance(feature_names = colnames(train %>% select(-is_female, -id))
+                                     ,model = final_xgb_model
+                                     ,data = as.matrix(train %>% select(-is_female, -id))
+                                     ,label = as.numeric(as.character(train$is_female)))
 
 
 # generate predictions
-predictions<- data.frame(test_id = test$id, predictions = predict(final_xgb_model, newdata = test.matrix))
-submit_predictions(predictions, paste("./output/submission",
-                                      format(Sys.time(), "%Y%m%d"),
-                                      ".csv", 
-                                      sep = ""))
+xgb_predictions <- data.frame(test_id = test$id, predictions = predict(final_xgb_model, newdata = test.matrix))
+
+
+############################### Model Analysis ################################################
+importance_mat <- importance_mat %>% as.data.frame() %>% mutate(Column.Name = substr(Feature, 1, nchar(Feature)-5)) %>% 
+  left_join(dict, by = c("Column.Name"))
+importance_mat_dtl <- importance_mat_dtl %>% as.data.frame() %>% mutate(Column.Name = substr(Feature, 1, nchar(Feature)-5)) %>% 
+  left_join(dict, by = c("Column.Name"))
+submit_predictions(xgb_predictions, paste("./output/submission",
+                                          format(Sys.time(), "%Y%m%d"),
+                                          ".csv", 
+                                          sep = ""))
+
+write.xlsx(x = hyper_parameters, "./output/hyperparameters.xlsx")
+write.xlsx(x = importance_mat, "./output/importance_matrix.xlsx", sheetName = "Importance")
+write.xlsx(x = importance_mat_dtl, "./output/importance_matrix.xlsx", sheetName = "Importance Detail", append = TRUE)
+
+temp <- valid
+temp$prob_is_female <- predict(final_xgb_model, newdata = valid.matrix)
+temp <- temp %>% mutate(pred_is_female = as.factor(as.numeric(prob_is_female > 0.5)),
+                error_row = as.factor( ifelse(!(is_female == pred_is_female), 
+                                              ifelse(is_female == 1, "FN", "FP"), 
+                                              ifelse(is_female == 1, "TP", "TN")))
+                )
+confusionMatrix(reference = temp$is_female, data = temp$pred_is_female)
+
+# Let us investigate the differences between the correctly classified instances and the worngly classified ones.
+# First, what makes False positives different from True negatives? This is what we need to address wrong positives.
+
+a <- t(sapply(names(train %>% select(-is_female, -id)), function(x) 
+  return(c(x,(ks.test(temp[which(temp$error_row == "TN"),x], temp[which(temp$error_row == "FP"),x]))$p.value  ))
+  )) 
+a <- data.frame(name = a[,1], pval = as.numeric(a[, 2]))
+
+
+ks.test(temp[which(temp$error_row == "TN"),]$DL0_catB, temp[which(temp$error_row == "FP"),]$DL0_catB)
+temp %>% filter(error_row %in% c("TN", "FP")) %>% select(DL0_catB, error_row) %>% group_by(error_row) %>%
+  summarise(mn = mean(DL0_catB), se = sd(DL0_catB)) %>%
+  ggplot(aes(y = mn, fill = error_row)) + geom_bar(stat = "identity")
+
+
+
+
+
+
+
+
+

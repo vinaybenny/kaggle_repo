@@ -45,9 +45,14 @@ catcols <- union(union(names(train[, !grepl("Unknown", label(train), fixed = TRU
                  names(train[, sapply(train, is.character)])),
                  c("AA4", "AA7", "AA14", "AA15", "DG8a", "DG8b", "DG8c", "DL4_96", "DL4_99", "DL11", "MT1", "IFI18", "FB13",
                    "DG9a", "DG9b", "DG9c", "G2P2_96", "G2P3_6", "G2P3_8", "G2P3_9","G2P3_11", "G2P3_13", "G2P3_96", "MT6C",
-                   "MM23", "FB14", "FB15"))
+                   "MM23", "FB14", "FB15"
+                   ,"DG10b","DG10c","DG11b","DG11c","G2P3_1","G2P3_2", "G2P3_3","G2P3_4","G2P3_5","G2P3_7","G2P3_10","G2P3_12"
+                   ,"G2P3_14","G2P3_15","G2P3_16","MT3_1","MT3_2","MT3_3","MT12_1","MT12_2","MT12_3","MT12_4","MT12_5","MT12_6"
+                   ,"MT12_7","MT12_8","MT12_9","MT12_10","MT12_11","MT12_12", "MT12_13", "MT12_14", "MT12_96","FF7_1","FF7_2"
+                   ,"FF7_3","FF7_4","FF7_5","FF7_6","FF7_7","FF7_96","FF8_1","FF8_2","FF8_3","FF8_4","FF8_5","FF8_6","FF8_7","FF8_96"
+                   ))
 intcols <- names(train[, sapply(train, is.integer) & !( names(train) %in% c(idcol, catcols, targetcol))])
-numcols <- names(train[, !names(train) %in% c(catcols, intcols, idcol, targetcol) ])
+numcols <- c("DL8")
 
 # A crude treatment of all NAs in the dataset as a special category. This has repercussions on numeric columns
 #train[is.na(train)] <- -99
